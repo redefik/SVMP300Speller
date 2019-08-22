@@ -9,12 +9,16 @@
 source("import_dataset.R")
 source("data_understanding.R")
 source("data_shuffling.R")
+source("data_splitting.R")
 
 dataset <- import_dataset("X.txt", "Y.txt", "C.txt")
 
 # Data Exploration. data_summary object contains the highlights of the available
 # dataset.
 data_summary <- data_understanding(dataset)
+
+trials <- data_summary$Trials
+iterations_for_trial <- data_summary$`Iterations for Trial`
 
 # Data Exploration results in no missing values and no duplicated instances.
 # Instead, few outliers are detected. Since we are not able to attest whether
@@ -24,8 +28,14 @@ data_summary <- data_understanding(dataset)
 
 # To produce an unbiased model, we scramble the spelled characters and shuffle
 # the dataset accordingly
-shuffled_data <- data_shuffling(dataset, data_summary$Trials,
-                                12 * data_summary$`Iterations for Trial`)
+shuffled_data <- data_shuffling(dataset, trials, 12 * iterations_for_trial)
+
+# Generate Training Set and Test Set
+data_split <- split_training_test(shuffled_data$instances, 
+                                  shuffled_data$characters,
+                                  12 * iterations_for_trial)
+
+# 
 
 
 
