@@ -6,11 +6,14 @@
 # selection steps (trial).                                                     #
 ################################################################################
 
+# Authors:
+
 source("import_dataset.R")
 source("data_understanding.R")
 source("data_shuffling.R")
 source("data_splitting.R")
 source("channel_selection.R")
+source("data_scaling.R")
 
 dataset <- import_dataset("X.txt", "Y.txt", "C.txt")
 
@@ -43,6 +46,9 @@ top_channels <- filter_channels(data_split$train_x, data_split$train_y,
                                 data_summary$`Samples for Channel`)
 
 # With our approach seems that no channels can be considered irrelevant
+
+# Data Scaling
+scaled_split <- scale_split(data_split)
 
 
 
