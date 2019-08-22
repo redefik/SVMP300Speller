@@ -10,6 +10,7 @@ source("import_dataset.R")
 source("data_understanding.R")
 source("data_shuffling.R")
 source("data_splitting.R")
+source("channel_selection.R")
 
 dataset <- import_dataset("X.txt", "Y.txt", "C.txt")
 
@@ -35,7 +36,13 @@ data_split <- split_training_test(shuffled_data$instances,
                                   shuffled_data$characters,
                                   12 * iterations_for_trial)
 
-# 
+# Select the most relevant channels trying to reduce the dimensionality of the
+# problem
+top_channels <- filter_channels(data_split$train_x, data_split$train_y, 
+                                data_summary$`Number of Channels`, 
+                                data_summary$`Samples for Channel`)
+
+# With our approach seems that no channels can be considered irrelevant
 
 
 
