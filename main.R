@@ -48,6 +48,10 @@ top_channels <- filter_channels(data_split$train_x, data_split$train_y,
 # Data Scaling
 scaled_split <- scale_split(data_split)
 
+# Since we use a linear SVM we have to choose the value of the C parameter
+# Tested C are sampled from the set: 2^-5, 2^-3, 2^-1, ..., 2^5.
+c_vector <- 2^seq(-5, 15, 2)
+
 
 
 
