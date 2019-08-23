@@ -1,6 +1,10 @@
 # Return an object that reports some information about the given dataset
 data_understanding <- function(dataset) {
   
+   cat("Data Understanding...\n")
+   pb <- txtProgressBar(min=0, max=100, style=3)
+  
+  
   # Information about rows
   instances <- nrow(dataset)
   num_of_trials <- 6
@@ -17,6 +21,8 @@ data_understanding <- function(dataset) {
   is_dup <- duplicated(dataset)
   num_of_duplicated <- length(Filter(isTRUE, is_dup))
   
+  setTxtProgressBar(pb, 25)
+  
   # Search for missing values
   count_missing <- function(values) {
     is_missing <- !complete.cases(values)
@@ -25,6 +31,8 @@ data_understanding <- function(dataset) {
   
   column_missing_values <- sapply(dataset, count_missing)
   missing_values <- sum(column_missing_values)
+  
+  setTxtProgressBar(pb, 50)
   
   # Search for outliers
   detect_outliers <- function(values) {
@@ -35,6 +43,8 @@ data_understanding <- function(dataset) {
   }
   
   features_outliers <- lapply(dataset[,1:(ncol(dataset)-2)], detect_outliers)
+  
+  setTxtProgressBar(pb, 75)
   
   # Speller used to communicate
   r1 <- c("A", "B", "C", "D", "E", "F")
@@ -70,5 +80,11 @@ data_understanding <- function(dataset) {
                      "Number of Channels", "Channels", "Samples for Channel",
                      "Number of Duplicated", "Missing Values",
                      "Outliers for each feature", "Speller", "Trials")
+
+   setTxtProgressBar(pb, 100)
+   close(pb)
+  
+   cat("Done\n")
+  
   return(output)
 }

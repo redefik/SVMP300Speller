@@ -17,8 +17,6 @@ source("data_scaling.R")
 
 dataset <- import_dataset("X.txt", "Y.txt", "C.txt")
 
-# Data Exploration. data_summary object contains the highlights of the available
-# dataset.
 data_summary <- data_understanding(dataset)
 
 trials <- data_summary$Trials
