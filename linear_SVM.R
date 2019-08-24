@@ -7,7 +7,7 @@
 library(LiblineaR)
 
 linear_SVM <- function(train_x, train_y, test_x, test_chars, test_stimuli,
-                       c, rows_for_char, matrix_speller) {
+                       c, rows_for_char, matrix_speller, verbose) {
   set.seed(12345)
   linear_model <- LiblineaR(data=train_x, target=train_y, type=2, cost=c,
                             bias=TRUE, verbose=FALSE)
@@ -39,5 +39,13 @@ linear_SVM <- function(train_x, train_y, test_x, test_chars, test_stimuli,
   })
   
   correct_predictions <- length(Filter(isTRUE, predicted_chars == test_chars))
+  
+  if (verbose) {
+    cat("Observed characters")
+    print(test_chars)
+    cat("Predicted characters")
+    print(predicted_chars)
+  }
+  
   return(round(correct_predictions/length(test_chars), 4))
 }

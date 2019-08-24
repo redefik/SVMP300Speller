@@ -1,6 +1,6 @@
 # Scrambles the spelled characters and shuffles the dataset accordingly.
 data_shuffling <- function(dataset, characters, rows_for_character) {
-  set.seed(123)
+  set.seed(123456789)
   chars_permutation <- sample(1:length(characters), length(characters))
   scrambled_blocks <- lapply(chars_permutation, function(i) {
     inf <- i*rows_for_character - rows_for_character + 1
