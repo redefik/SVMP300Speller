@@ -3,7 +3,7 @@
 # An user with amyotrphic lateral sclerosis (ALS) focused on one out of        #
 # 36 different characters.                                                     #
 # Objective: to predict the correct character in each of the provided character#
-# selection steps (trial).                                                     #
+# selection steps (trials).                                                    #
 ################################################################################
 
 # Authors:
@@ -13,6 +13,7 @@ source("data_understanding.R")
 source("data_shuffling.R")
 source("data_splitting.R")
 source("channel_selection.R")
+source("filter_sampling_times.R")
 source("cross_validation.R")
 source("linear_SVM.R")
 
@@ -20,19 +21,21 @@ dataset <- import_dataset("X.txt", "Y.txt", "C.txt")
 
 data_summary <- data_understanding(dataset)
 
-trials <- data_summary$Trials
-iterations_for_trial <- data_summary$`Iterations for Trial`
-rows_for_char <- 12 * iterations_for_trial
+characters <- data_summary$Characters
+iterations_for_char <- data_summary$`Iterations for Character`
+rows_for_char <- data_summary$`Rows for Character`
+samples_for_channel <- data_summary$`Samples for Channel`
+num_of_channels <- data_summary$`Number of Channels`
 
 # Data Exploration results in no missing values and no duplicated instances.
-# Instead, few outliers are detected. Since we are not able to attest whether
-# these values are anomalous or not, we avoid to replace them.
+# Instead, few outliers have been detected. Since we are not able to attest 
+# whether these values are anomalous or not, we don't replace them.
 # Furthermore, characters have not been scrambled, i.e. we have first the
-# trials of the first word, then the trials of the second one...and so on.
+# chars of the first word, then the chars of the second one...and so on.
 
 # To produce an unbiased model, we scramble the spelled characters and shuffle
 # the dataset accordingly
-shuffled_data <- data_shuffling(dataset, trials, rows_for_char)
+shuffled_data <- data_shuffling(dataset, characters, rows_for_char)
 
 # Generate Training Set and Test Set
 data_split <- split_training_test(shuffled_data$instances, 
@@ -41,10 +44,18 @@ data_split <- split_training_test(shuffled_data$instances,
 # Select the most relevant channels trying to reduce the dimensionality of the
 # problem
 top_channels <- filter_channels(data_split$train_x, data_split$train_y, 
-                                data_summary$`Number of Channels`, 
-                                data_summary$`Samples for Channel`)
+                                num_of_channels, samples_for_channel)
+# With this approach it seems that no channels can be considered irrelevant
 
-# With our approach it seems that no channels can be considered irrelevant
+# Let's see another approach: evaluating not channels but sampling times.
+bad_sampling_times <- filter_sampling_times(data_split$train_x, 
+                                            data_split$train_y, 
+                                            samples_for_channel, 
+                                            num_of_channels)
+# With this approach it seems that no sampling times can be considered 
+# irrelevant
+
+# Disclaimer: the feature analysis has been made with different seed values.
 
 # Standardize training set
 scaled_train <- scale(data_split$train_x)
@@ -53,7 +64,7 @@ train_scale <- attr(scaled_train, "scaled:scale")
 data_split$train_x <- as.data.frame(scaled_train)
 
 # Since we use a linear SVM we have to choose the value of the C parameter
-# Tested C are sampled from the set: 2^-5, 2^-3, 2^-1, ..., 2^5.
+# Tested C are sampled from the set: 2^-5, 2^-3, 2^-1, ..., 2^15.
 c_vector <- 2^seq(-5, 15, 2)
 c_accuracies <- cross_validation(c_vector, data_split, rows_for_char, 
                                  data_summary$Speller)

@@ -5,10 +5,10 @@ library(CORElearn)
 # i. Then ReliefF is applied.
 filter_channels <- function(train_x, train_y, num_of_channels, samples_for_channel) {
   
-  set.seed(1234)
+  set.seed(134599771)
   
   reducted_train <- sapply(1:num_of_channels, function(i) {
-    inf <- i* samples_for_channel - samples_for_channel + 1
+    inf <- (i - 1) * samples_for_channel + 1
     sup <- i * samples_for_channel
     samples <- train_x[, inf:sup]
     return(apply(samples, 1, mean))
@@ -20,9 +20,10 @@ filter_channels <- function(train_x, train_y, num_of_channels, samples_for_chann
   # ReliefFexpRank estimator is used to take into account conditional
   # dependencies among attributes
   # ReliefIterations=-2 means that the iterations are sqrt(datasize)
+  # 70 is the default value for kNearestExpRank
   feature_rank <- attrEval(train_y ~ ., reducted_dataset, 
                            estimator="ReliefFexpRank", kNearestExpRank=70,
-                           ReliefIterations=-2) 
+                           ReliefIterations=0) 
   top_feature <- which(feature_rank >= 0)
   names(top_feature) <- NULL
   return(sort(top_feature))

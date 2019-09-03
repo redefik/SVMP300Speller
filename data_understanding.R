@@ -7,9 +7,10 @@ data_understanding <- function(dataset) {
   
   # Information about rows
   instances <- nrow(dataset)
-  num_of_trials <- 6
-  chars_for_trial <- 5
-  iterations_for_trial <- 10
+  num_of_words <- 6
+  chars_for_word <- 5
+  iterations_for_char <- 10
+  rows_for_char <- 12 * iterations_for_char
   
   # Information about columns
   features <- ncol(dataset) - 2
@@ -57,13 +58,12 @@ data_understanding <- function(dataset) {
   rownames(speller) <- NULL
   
   # Extract trials
-  trials <- sapply(1:(num_of_trials * chars_for_trial), function(i) {
-    flash_for_trial <- 12 * iterations_for_trial
-    inf <- flash_for_trial * i - flash_for_trial + 1
-    sup <- flash_for_trial * i
-    # Select instances of Y corresponding to the trial
-    trial_labels <- dataset$label[inf:sup]
-    target_labels_positions <- which(trial_labels == 1)
+  characters <- sapply(1:(num_of_words * chars_for_word), function(i) {
+    inf <- rows_for_char * (i - 1) + 1
+    sup <- rows_for_char * i
+    # Select instances of Y corresponding to the char
+    char_labels <- dataset$label[inf:sup]
+    target_labels_positions <- which(char_labels == 1)
     # Select row and column corresponding to y = +1
     target_row_column <- unique(dataset$stimulus_type[target_labels_positions])
     row_index <- target_row_column[1]
@@ -71,15 +71,15 @@ data_understanding <- function(dataset) {
     return(speller[row_index, col_index])
   })
   
-  output <- list(instances, num_of_trials, chars_for_trial, iterations_for_trial,
-                 features, num_of_channels, channels, samples_for_channels,
-                 num_of_duplicated, missing_values, features_outliers, speller,
-                 trials)
-  names(output) <- c("Instances", "Number of Trials", "Characters for Trial",
-                     "Iterations for Trial", "Number of Features",
+  output <- list(instances, num_of_words, chars_for_word, iterations_for_char,
+                 rows_for_char, features, num_of_channels, channels,
+                 samples_for_channels, num_of_duplicated, missing_values,
+                 features_outliers, speller, characters)
+  names(output) <- c("Instances", "Number of Words", "Characters for Word",
+                     "Iterations for Character", "Rows for Character", "Number of Features",
                      "Number of Channels", "Channels", "Samples for Channel",
                      "Number of Duplicated", "Missing Values",
-                     "Outliers for each feature", "Speller", "Trials")
+                     "Outliers for each feature", "Speller", "Characters")
 
    setTxtProgressBar(pb, 100)
    close(pb)
