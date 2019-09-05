@@ -6,7 +6,7 @@ library(CORElearn)
 # returned.
 filter_sampling_times <- function(train_x, train_y, samples_for_channel, 
                                   num_of_channels) {
-  
+  cat("Sampling times selection: the operation could require few minutes...\n")
   set.seed(432167)
   
   dataset <- as.data.frame(list(train_x, train_y))
@@ -14,6 +14,10 @@ filter_sampling_times <- function(train_x, train_y, samples_for_channel,
   dataset_names[length(dataset_names)] <- "train_y"
   names(dataset) <- dataset_names
   
+  # ReliefFexpRank estimator is used to take into account conditional
+  # dependencies among attributes
+  # ReliefIterations=0 means that the iterations are datasize
+  # 70 is the default value for kNearestExpRank
   feature_scores <- attrEval(train_y ~ ., dataset, estimator="ReliefFexpRank",
                            kNearestExpRank=70, ReliefIterations=0)
   
@@ -22,5 +26,6 @@ filter_sampling_times <- function(train_x, train_y, samples_for_channel,
                        samples_for_channel)
     return(mean(feature_scores[i_positions]))
   })
+  cat("Done\n")
   return(which(sampling_time_scores < 0))
 }

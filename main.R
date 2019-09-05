@@ -6,7 +6,7 @@
 # selection steps (trials).                                                    #
 ################################################################################
 
-# Authors:
+# Authors: Federico Viglietta and Tommaso Villa
 
 source("import_dataset.R")
 source("data_understanding.R")
@@ -16,9 +16,12 @@ source("channel_selection.R")
 source("filter_sampling_times.R")
 source("cross_validation.R")
 source("linear_SVM.R")
+library(LiblineaR)
 
+# Importing dataset
 dataset <- import_dataset("X.txt", "Y.txt", "C.txt")
 
+# Data Understanding
 data_summary <- data_understanding(dataset)
 
 characters <- data_summary$Characters
@@ -41,21 +44,25 @@ shuffled_data <- data_shuffling(dataset, characters, rows_for_char)
 data_split <- split_training_test(shuffled_data$instances, 
                                   shuffled_data$characters, rows_for_char)
 
-# Select the most relevant channels trying to reduce the dimensionality of the
-# problem
+# Feature Selection
+
+# A first attempt of feature extraction is made trying to select the most
+# relevant channels
 top_channels <- filter_channels(data_split$train_x, data_split$train_y, 
                                 num_of_channels, samples_for_channel)
-# With this approach it seems that no channels can be considered irrelevant
+# With the used approach it seems that no channels can be considered irrelevant
 
-# Let's see another approach: evaluating not channels but sampling times.
-bad_sampling_times <- filter_sampling_times(data_split$train_x, 
-                                            data_split$train_y, 
-                                            samples_for_channel, 
+# A second attempt of feature extraction is made trying to select the most
+# relevant sampling times
+bad_sampling_times <- filter_sampling_times(data_split$train_x,
+                                            data_split$train_y,
+                                            samples_for_channel,
                                             num_of_channels)
-# With this approach it seems that no sampling times can be considered 
+# With the used approach it seems that no sampling times can be considered 
 # irrelevant
 
-# Disclaimer: the feature analysis has been made with different seed values.
+# Disclaimer: the feature analysis has been made with different seed values and
+#             always returned the same results.
 
 # Standardize training set
 scaled_train <- scale(data_split$train_x)
@@ -63,20 +70,31 @@ train_center <- attr(scaled_train, "scaled:center")
 train_scale <- attr(scaled_train, "scaled:scale")
 data_split$train_x <- as.data.frame(scaled_train)
 
-# Since we use a linear SVM we have to choose the value of the C parameter
-# Tested C are sampled from the set: 2^-5, 2^-3, 2^-1, ..., 2^15.
-c_vector <- 2^seq(-5, 15, 2)
-c_accuracies <- cross_validation(c_vector, data_split, rows_for_char, 
-                                 data_summary$Speller)
+# Cross-validation is used to tune the C parameter of SVM. The process is
+# repeated with different training-validation splits in order to perform a 
+# robust tuning choice.
+c_vector <- 10^seq(-6, 6, 1)
+c_accuracies <- multi_cross_validation(c_vector, data_split, rows_for_char, 
+                                 data_summary$Speller, 5)
 
-# For example, for C=0.03125 we obtain 90% accuracy, so a possible configuration
-# is: Linear SVM with C=0.03125
+# In light of cross-validation's results, best choice for C seems to be: 10^-3
 
-# First, we have to scale test set using training set statistics
+# Before being evaluated, test set is scaled using training set statistics.
 data_split$test_x <- as.data.frame(scale(data_split$test_x, train_center,
                                          train_scale))
-# Then, we invoke linear_SVM to evaluate the model on the test set
+# Evaluate the model on the test set.
 test_accuracy <- linear_SVM(data_split$train_x, data_split$train_y, 
                             data_split$test_x, data_split$test_chars,
-                            data_split$test_stimuli, 0.03125, rows_for_char,
+                            data_split$test_stimuli, 10^-3, rows_for_char,
                             data_summary$Speller, verbose=TRUE)
+
+# Eventually, the final model is trained on the entire dataset
+
+# Standardize dataset
+scaled_dataset <- scale(dataset[,1:(ncol(dataset)-2)])
+dataset_center <- attr(scaled_dataset, "scaled:center")
+dataset_scale <- attr(scaled_dataset, "scaled:scale")
+# Disclaimer: use the above statistics to scale test set
+
+final_model <- LiblineaR(data=scaled_dataset, target=dataset$label,
+                         type=1, cost=10^-3, bias=TRUE, verbose=FALSE)
