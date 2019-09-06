@@ -91,10 +91,10 @@ test_accuracy <- linear_SVM(data_split$train_x, data_split$train_y,
 # Eventually, the final model is trained on the entire dataset
 
 # Standardize dataset
-scaled_dataset <- scale(dataset[,1:(ncol(dataset)-2)])
+scaled_dataset <- scale(shuffled_data$instances[,1:(ncol(dataset)-2)])
 dataset_center <- attr(scaled_dataset, "scaled:center")
 dataset_scale <- attr(scaled_dataset, "scaled:scale")
-# Disclaimer: use the above statistics to scale test set
 
-final_model <- LiblineaR(data=scaled_dataset, target=dataset$label,
+# Disclaimer: use the above statistics to scale test set
+final_model <- LiblineaR(data=scaled_dataset, target=shuffled_data$instances[,(ncol(dataset)-1)],
                          type=1, cost=10^-3, bias=TRUE, verbose=FALSE)
