@@ -16,9 +16,12 @@ source("channel_selection.R")
 source("filter_sampling_times.R")
 source("cross_validation.R")
 source("linear_SVM.R")
+source("signal_clustering.R")
+source("test_evaluation.R")
 library(LiblineaR)
 
 # Importing dataset
+# The three arguments are the training files
 dataset <- import_dataset("X.txt", "Y.txt", "C.txt")
 
 # Data Understanding
@@ -64,6 +67,14 @@ bad_sampling_times <- filter_sampling_times(data_split$train_x,
 # Disclaimer: the feature analysis has been made with different seed values and
 #             always returned the same results.
 
+# To check if Ensemble Learning could be a viable approach, we find 6 clusters
+# (i.e. the number of provided words) for the available instances
+cluster_signals(dataset[,1:(ncol(dataset)-2)], data_summary$`Number of Words`,
+                rows_for_char, data_summary$`Characters for Word`)
+
+# It seems that signals corresponding to the same run are not homogeneus.
+# Therefore, we abandon the idea to follow an Ensemble Learning approach.
+
 # Standardize training set
 scaled_train <- scale(data_split$train_x)
 train_center <- attr(scaled_train, "scaled:center")
@@ -96,5 +107,11 @@ dataset_center <- attr(scaled_dataset, "scaled:center")
 dataset_scale <- attr(scaled_dataset, "scaled:scale")
 
 # Disclaimer: use the above statistics to scale test set
-final_model <- LiblineaR(data=scaled_dataset, target=shuffled_data$instances[,(ncol(dataset)-1)],
+final_model <- LiblineaR(data=scaled_dataset, 
+                         target=shuffled_data$instances[,(ncol(dataset)-1)],
                          type=1, cost=10^-3, bias=TRUE, verbose=FALSE)
+
+# Evaluate test data
+# The first tree arguments will be test files
+evaluate_test("X.txt", "Y.txt", "C.txt", final_model, data_summary$Speller, 
+              dataset_center, dataset_scale, rows_for_char)
